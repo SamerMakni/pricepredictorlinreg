@@ -4,14 +4,13 @@ import shap
 import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn.ensemble import RandomForestRegressor
-
 st.write("""
-# Boston House Price Prediction App
-This app predicts the **Boston House Price**!
+# Tunisia House Price Prediction App
+The main task of this project is to $predict$ the price of a housing in Tunsia. We will be using this dataset of House pricing in Tunisia, which originally contains more than 8000 rows and 25 features. It was preprocced (check this notebook) to fit a linear regression model that predicts a housing price using user input (sidebar).
 """)
 st.write('---')
 
-# Loads the Boston House Price Dataset
+# Loads the Tunisian House Price Dataset
 tunisia = pd.read_csv("./out.csv")
 X = pd.DataFrame(tunisia, columns=['Area', 'room', 'bathroom', 'state', 'latt', 'long',
        'distance_to_capital', 'concierge', 'beach_view',
@@ -24,19 +23,38 @@ Y = pd.DataFrame(tunisia, columns=["price_tnd"])
 st.sidebar.header('Specify Input Parameters')
 
 def user_input_features():
-    Area = st.sidebar.slider('Area', float(X.Area.min()), float(X.Area.max()), float(X.Area.mean()))
-    room = st.sidebar.slider('room', float(X.room.min()), float(X.room.max()), float(X.room.mean()))
-    bathroom = st.sidebar.slider('bathroom', float(X.bathroom.min()), float(X.bathroom.max()), float(X.bathroom.mean()))
-    state = st.sidebar.slider('state', float(X.state.min()), float(X.state.max()), float(X.state.mean()))
+    concierge = 0
+    beach_view = 0
+    mountain_view = 0
+    pool = 0
+    air_conditioning = 0
+    central_heating = 0
+    Area = st.sidebar.number_input('House Area(in m²)', min_value=20, max_value=2200, value=300, step=1)
+    room = st.sidebar.select_slider('Number of rooms',  options=[i for i in range(1,43)],value=3)
+    bathroom = st.sidebar.select_slider('Number of bathrooms', options=[i for i in range(1,15)], value=1)
+    state = st.sidebar.select_slider('State of House(0 for now, 1 for normal, 2 for needs renovation', options=[i for i in range(0,3)], value=1)
     latt = st.sidebar.slider('latt', float(X.latt.min()),float(X.latt.max()),float(X.latt.mean()))
     longi = st.sidebar.slider('long', float(X.long.min()), float(X.long.max()), float(X.long.mean()))
     distance_to_capital = st.sidebar.slider('distance_to_capital', float(X.distance_to_capital.min()),float(X.distance_to_capital.max()),float(X.distance_to_capital.mean()))
-    concierge = st.sidebar.slider('concierge', float(X.concierge.min()),float(X.concierge.max()),float(X.concierge.mean()))
-    beach_view = st.sidebar.slider('beach_view', float(X.beach_view.min()),float(X.beach_view.max()),float(X.beach_view.mean()))
-    mountain_view = st.sidebar.slider('mountain_view', float(X.mountain_view.min()),float(X.mountain_view.max()),float(X.mountain_view.mean()))
-    pool = st.sidebar.slider('pool', float(X.pool.min()), float(X.pool.max()), float(X.pool.mean()))
-    air_conditioning = st.sidebar.slider('air_conditioning', float(X.air_conditioning.min()), float(X.air_conditioning.max()), float(X.air_conditioning.mean()))
-    central_heating = st.sidebar.slider('central_heating', float(X.central_heating.min()), float(X.central_heating.max()), float(X.central_heating.mean()))
+    st.sidebar.write("## The following checkboxes represent categorial features")
+    conciergecheck = st.sidebar.checkbox('Concierge', value=False)
+    beach_viewcheck = st.sidebar.checkbox('Beach view', value=False)
+    mountain_viewcheck = st.sidebar.checkbox('Mountain view', value=False)
+    poolcheck = st.sidebar.checkbox('Pool', value=False)
+    air_conditioningcheck = st.sidebar.checkbox('Air conditioning', value=False)
+    central_heatingcheck = st.sidebar.checkbox('Central heating', value=False)
+    if conciergecheck:
+        concierge = 1
+    if beach_viewcheck:
+        beach_view = 1 
+    if poolcheck:
+        pool = 1
+    if mountain_viewcheck:
+        mountain_view = 1
+    if air_conditioningcheck:
+        air_conditioning = 1
+    if central_heatingcheck:
+        central_heating = 1
     data = {'Area': Area,
             'room': room,
             'bathroom': bathroom,
@@ -59,7 +77,7 @@ df = user_input_features()
 
 # Print specified input parameters
 st.header('Specified Input parameters')
-st.write(df)
+st.dataframe(df)
 st.write('---')
 
 # Build Regression Model
@@ -68,6 +86,24 @@ model.fit(X, Y.values.ravel())
 # Apply Model to Make Prediction
 prediction = model.predict(df)
 
-st.header('Prediction of price')
-st.write(prediction)
+st.header('Price prediction')
+st.write('#### ', round(prediction[0] , 3) ,'TND')
 st.write('---')
+st.header('Inferences')
+st.write('### Linear regression')
+st.write('Linear Regression is a machine learning algorithm based on supervised learning. It performs a regression task. Regression models a target prediction value based on independent variables. It is mostly used for finding out the relationship between variables and forecasting.')
+st.latex(r'''
+\begin{equation}
+Y_i = \beta_0 + \beta_1 X_i + \epsilon_i
+\end{equation} ''')
+st.write('In our case we are forcasting $Y_i$ which is the feature `price_tnd`. While the rest of features `Area` `room` `bathroom` `latt` `long` `distance_to_capital` `concierge` `beach_view` `mountain_view` `pool` `air_conditioning` `central_heating`, represents $X_i$, the prediction variables.')
+st.write('### Feature Importance')
+st.write('#### Correlation')
+st.write("Correlation is statistical technique which determines how one variables moves/changes in relation with the other variable. It gives us the idea about the degree of the relationship of the two variables. in this case it has been used to forecast our target variable using seaborn's heatmap.")
+st.image("cor.png")
+st.write('#### Shapley Additive Explanations')
+st.write('It is a game theoretic approach to explain the output of any machine learning model. It connects optimal credit allocation with local explanations using the classic Shapley values from game theory and their related extensions.')
+st.latex(r'''
+\operatorname{SHAP}_{\text {feature }}(x)=\sum_{\text {set:feature } \in \text { set }}\left[|\operatorname{set}| \times\left(\begin{array}{c}F \\ \mid \text { set } \mid\end{array}\right)\right]^{-1}\left[\operatorname{Predict}_{\text {set }}(x)-\operatorname{Predict}_{\text {set } \mid \text { feature }}(x)\right]
+ ''')
+st.image("shap.png")
